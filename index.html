@@ -4,30 +4,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dossiê Trabalhista PJ</title>
+    <!-- Estilos do projeto (se houver) -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
     <div class="container">
         <h1>Dossiê Trabalhista PJ</h1>
-        <p class="subtitulo">Plataforma de Auditoria e Blindagem de Vínculos</p>
+        <p>Plataforma de Auditoria e Blindagem de Vínculos</p>
 
         <!-- Formulário de Cadastro -->
-        <div class="form-card">
-            <label>Seu Nome Completo:</label>
-            <input type="text" id="nome" placeholder="Ex: João da Silva">
+        <form>
+            <label for="nome_completo">Seu Nome Completo:</label>
+            <input type="text" id="nome_completo" name="nome_completo" required>
 
-            <label>CPF ou CNPJ da Contratante:</label>
-            <input type="text" id="cpfCnpj" placeholder="Ex: 00.000.000/0001-00">
+            <label for="documento">CPF ou CNPJ da Contratante:</label>
+            <input type="text" id="documento" name="documento" required>
 
-            <label>Empresa Tomadora:</label>
-            <input type="text" id="empresa" placeholder="Ex: Nome da Empresa">
+            <label for="empresa">Empresa Tomadora:</label>
+            <input type="text" id="empresa" name="empresa" required>
 
-            <label>Salário Base Mensal (R$):</label>
-            <input type="number" id="salarioBase" placeholder="Ex: 3500.00">
+            <label for="salario">Salário Base Mensal (R$):</label>
+            <input type="number" id="salario" name="salario" step="0.01" required>
 
-            <button id="btnSalvar" onclick="salvarPerfil()">Salvar e Blindar Vínculo</button>
-        </div>
+            <button type="submit">Salvar e Blindar Vínculo</button>
+        </form>
 
         <!-- Seção de Listagem -->
         <div class="secao-lista">
@@ -36,7 +36,10 @@
         </div>
     </div>
 
+    <!-- Biblioteca oficial do Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Seu arquivo de lógica -->
     <script src="app.js"></script>
 </body>
 </html>
-
