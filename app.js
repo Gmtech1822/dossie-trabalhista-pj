@@ -6,31 +6,31 @@ let supabase = null;
 window.addEventListener("DOMContentLoaded", function() {
     if (window.supabase) {
         supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        carregarDados();
-    } else {
-        const listaDiv = document.getElementById("listaUsuarios");
-        if (listaDiv) listaDiv.innerHTML = "Erro: A biblioteca do Supabase não carregou.";
     }
+    carregarDadosDireto();
 });
 
-async function carregarDados() {
+// Função de busca blindada usando fetch direto para evitar travamentos da biblioteca
+async function carregarDadosDireto() {
     const listaDiv = document.getElementById("listaUsuarios");
     if (!listaDiv) return;
     
     listaDiv.innerHTML = "Buscando registros na nuvem...";
 
     try {
-        // Adicionamos um controle para não travar infinito caso o banco demore
-        const fetchPromise = supabase
-            .from('usuarios')
-            .select('*');
+        const resposta = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=*&order=id.desc`, {
+            headers: {
+                "apikey": SUPABASE_ANON_KEY,
+                "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+            }
+        });
 
-        const { data, error } = await fetchPromise;
-
-        if (error) {
-            listaDiv.innerHTML = "Erro ao carregar do banco: " + error.message;
+        if (!resposta.ok) {
+            listaDiv.innerHTML = "Erro HTTP ao carregar: " + resposta.status;
             return;
         }
+
+        const data = await resposta.json();
 
         if (!data || data.length === 0) {
             listaDiv.innerHTML = "Nenhum vínculo salvo na nuvem ainda.";
@@ -49,16 +49,11 @@ async function carregarDados() {
         }
         listaDiv.innerHTML = html;
     } catch (err) {
-        listaDiv.innerHTML = "Erro crítico de conexão: " + err.message;
+        listaDiv.innerHTML = "Erro de conexão: " + err.message;
     }
 }
 
 async function salvarDados() {
-    if (!supabase) {
-        alert("Erro: Supabase não inicializado.");
-        return;
-    }
-
     const nome = document.getElementById("nome_completo").value;
     const documento = document.getElementById("documento").value;
     const empresa = document.getElementById("empresa").value;
@@ -66,6 +61,11 @@ async function salvarDados() {
 
     if (!nome || !documento || !empresa) {
         alert("Por favor, preencha todos os campos obrigatórios.");
+        return;
+    }
+
+    if (!supabase) {
+        alert("Erro: Supabase não inicializado.");
         return;
     }
 
@@ -80,7 +80,7 @@ async function salvarDados() {
             }]);
 
         if (error) {
-            alert("Erro do Supabase ao salvar: " + error.message);
+            alert("Erro ao salvar: " + error.message);
             return;
         }
 
@@ -91,7 +91,7 @@ async function salvarDados() {
         document.getElementById("empresa").value = "";
         document.getElementById("salario").value = "";
         
-        carregarDados();
+        carregarDadosDireto();
     } catch (err) {
         alert("Erro inesperado ao salvar: " + err.message);
     }
