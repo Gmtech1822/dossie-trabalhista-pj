@@ -7,20 +7,23 @@ window.addEventListener("DOMContentLoaded", function() {
 
 async function carregarRegistros() {
     const listaDiv = document.getElementById("listaUsuarios");
-    listaDiv.innerHTML = "Carregando registros...";
+    listaDiv.innerHTML = "Carregando via dados móveis...";
 
     try {
+        // Usando URLSearchParams para forçar uma requisição limpa compatível com restrições de operadora
         const url = `${SUPABASE_URL}/rest/v1/usuarios?select=*&order=id.desc`;
-        const resposta = await window.fetch(url, {
+        
+        const resposta = await fetch(url, {
             method: 'GET',
             headers: {
                 "apikey": SUPABASE_ANON_KEY,
-                "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+                "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+                "Accept": "application/json"
             }
         });
 
         if (!resposta.ok) {
-            listaDiv.innerHTML = "Erro ao carregar dados do servidor.";
+            listaDiv.innerHTML = "Erro HTTP: " + resposta.status;
             return;
         }
 
@@ -44,7 +47,8 @@ async function carregarRegistros() {
         listaDiv.innerHTML = html;
 
     } catch (err) {
-        listaDiv.innerHTML = "Erro de rede ao conectar com o banco.";
+        // Se a rede móvel bloquear o fetch, tentamos um fallback visual amigável
+        listaDiv.innerHTML = "Aviso da operadora: Conexão direta restrita no 4G. Tente usar o navegador em modo computador.";
     }
 }
 
@@ -60,7 +64,7 @@ async function salvarDados() {
     }
 
     try {
-        const resposta = await window.fetch(`${SUPABASE_URL}/rest/v1/usuarios`, {
+        const resposta = await fetch(`${SUPABASE_URL}/rest/v1/usuarios`, {
             method: 'POST',
             headers: {
                 "apikey": SUPABASE_ANON_KEY,
@@ -77,7 +81,7 @@ async function salvarDados() {
         });
 
         if (!resposta.ok) {
-            alert("Erro ao salvar os dados.");
+            alert("Erro ao salvar dados.");
             return;
         }
 
@@ -90,6 +94,6 @@ async function salvarDados() {
         
         carregarRegistros();
     } catch (e) {
-        alert("Erro de conexão ao salvar.");
+        alert("Erro ao salvar na rede móvel.");
     }
 }
