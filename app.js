@@ -1,24 +1,33 @@
+// VERSAO DE TESTE 3.0 - FORCANDO EXIBICAO DE ERROS
 const SUPABASE_URL = 'https://uquccgrryamyiazggsqh.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_CITnEYD84t4G3B-4kusdBw_17ea18b9';
 
-let supabase = null;
+let supabaseClient = null;
 
-window.addEventListener("DOMContentLoaded", function() {
-    if (window.supabase) {
-        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Executa imediatamente ao carregar o script
+window.addEventListener("DOMContentLoaded", async function() {
+    const listaDiv = document.getElementById("listaUsuarios");
+    
+    try {
+        if (!window.supabase) {
+            listaDiv.innerHTML = "ERRO: A biblioteca do Supabase não foi injetada no HTML.";
+            return;
+        }
+
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        listaDiv.innerHTML = "Conectado! Buscando dados...";
+
+        await carregarRegistros();
+    } catch (e) {
+        listaDiv.innerHTML = "ERRO GLOBAL NO INIT: " + e.message;
     }
-    carregarDadosDireto();
 });
 
-// Função de busca blindada usando fetch direto para evitar travamentos da biblioteca
-async function carregarDadosDireto() {
+async function carregarRegistros() {
     const listaDiv = document.getElementById("listaUsuarios");
-    if (!listaDiv) return;
     
-    listaDiv.innerHTML = "Buscando registros na nuvem...";
-
     try {
-        const resposta = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=*&order=id.desc`, {
+        const resposta = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=*`, {
             headers: {
                 "apikey": SUPABASE_ANON_KEY,
                 "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
@@ -26,30 +35,31 @@ async function carregarDadosDireto() {
         });
 
         if (!resposta.ok) {
-            listaDiv.innerHTML = "Erro HTTP ao carregar: " + resposta.status;
+            listaDiv.innerHTML = "Erro HTTP na API: " + resposta.status;
             return;
         }
 
-        const data = await resposta.json();
+        const registros = await resposta.json();
 
-        if (!data || data.length === 0) {
+        if (!registros || registros.length === 0) {
             listaDiv.innerHTML = "Nenhum vínculo salvo na nuvem ainda.";
             return;
         }
 
         let html = "";
-        for (let i = 0; i < data.length; i++) {
-            let u = data[i];
+        for (let i = 0; i < registros.length; i++) {
+            let u = registros[i];
             html += "<div style='border: 1px solid #cbd5e1; padding: 12px; margin-bottom: 10px; border-radius: 6px; background: #f8fafc;'>";
-            html += "<strong>Nome:</strong> " + (u.nome_completo || 'Não informado') + "<br>";
-            html += "<strong>Documento:</strong> " + (u.documento || 'Não informado') + "<br>";
-            html += "<strong>Empresa:</strong> " + (u.empresa || 'Não informada') + "<br>";
+            html += "<strong>Nome:</strong> " + (u.nome_completo || 'N/A') + "<br>";
+            html += "<strong>Documento:</strong> " + (u.documento || 'N/A') + "<br>";
+            html += "<strong>Empresa:</strong> " + (u.empresa || 'N/A') + "<br>";
             html += "<strong>Salário:</strong> R$ " + (u.salario || 0);
             html += "</div>";
         }
         listaDiv.innerHTML = html;
+
     } catch (err) {
-        listaDiv.innerHTML = "Erro de conexão: " + err.message;
+        listaDiv.innerHTML = "Erro ao buscar registros: " + err.message;
     }
 }
 
@@ -60,17 +70,17 @@ async function salvarDados() {
     const salario = parseFloat(document.getElementById("salario").value) || 0;
 
     if (!nome || !documento || !empresa) {
-        alert("Por favor, preencha todos os campos obrigatórios.");
+        alert("Preencha todos os campos obrigatórios.");
         return;
     }
 
-    if (!supabase) {
-        alert("Erro: Supabase não inicializado.");
+    if (!supabaseClient) {
+        alert("Supabase não inicializado.");
         return;
     }
 
     try {
-        const { error } = await supabase
+        const { error } = await supabaseClient
             .from('usuarios')
             .insert([{ 
                 nome_completo: nome, 
@@ -80,19 +90,19 @@ async function salvarDados() {
             }]);
 
         if (error) {
-            alert("Erro ao salvar: " + error.message);
+            alert("Erro ao inserir no Supabase: " + error.message);
             return;
         }
 
-        alert("Vínculo salvo com sucesso na nuvem!");
+        alert("Vínculo salvo com sucesso!");
         
         document.getElementById("nome_completo").value = "";
         document.getElementById("documento").value = "";
         document.getElementById("empresa").value = "";
         document.getElementById("salario").value = "";
         
-        carregarDadosDireto();
-    } catch (err) {
-        alert("Erro inesperado ao salvar: " + err.message);
+        carregarRegistros();
+    } catch (e) {
+        alert("Erro ao salvar: " + e.message);
     }
 }
