@@ -1,10 +1,16 @@
 const SUPABASE_URL = 'https://uquccgrryamyiazggsqh.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_CITnEYD84t4G3B-4kusdBw_17ea18b9';
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let supabase = null;
 
-document.addEventListener("DOMContentLoaded", function() {
-    carregarDados();
+// Garante que a biblioteca do Supabase carregou antes de usar
+window.addEventListener("DOMContentLoaded", function() {
+    if (window.supabase) {
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        carregarDados();
+    } else {
+        document.getElementById("listaUsuarios").innerHTML = "Erro: A biblioteca do Supabase não carregou.";
+    }
 
     const form = document.querySelector("form");
     if (form) {
@@ -17,37 +23,48 @@ document.addEventListener("DOMContentLoaded", function() {
 
 async function carregarDados() {
     const listaDiv = document.getElementById("listaUsuarios");
-    if (listaDiv) listaDiv.innerHTML = "Carregando registros...";
+    if (!listaDiv) return;
+    
+    listaDiv.innerHTML = "Carregando registros...";
 
-    const { data, error } = await supabase
-        .from('usuarios')
-        .select('*')
-        .order('id', { ascending: false });
+    try {
+        const { data, error } = await supabase
+            .from('usuarios')
+            .select('*')
+            .order('id', { ascending: false });
 
-    if (error) {
-        if (listaDiv) listaDiv.innerHTML = "Erro ao carregar registros.";
-        return;
+        if (error) {
+            listaDiv.innerHTML = "Erro ao carregar: " + error.message;
+            return;
+        }
+
+        if (!data || data.length === 0) {
+            listaDiv.innerHTML = "Nenhum vínculo salvo na nuvem ainda.";
+            return;
+        }
+
+        let html = "";
+        for (let i = 0; i < data.length; i++) {
+            let u = data[i];
+            html += "<div style='border: 1px solid #ccc; padding: 10px; margin-bottom: 8px; border-radius: 4px; background: #fff;'>";
+            html += "<strong>Nome:</strong> " + (u.nome_completo || '') + "<br>";
+            html += "<strong>Documento:</strong> " + (u.documento || '') + "<br>";
+            html += "<strong>Empresa:</strong> " + (u.empresa || '') + "<br>";
+            html += "<strong>Salário:</strong> R$ " + (u.salario || 0);
+            html += "</div>";
+        }
+        listaDiv.innerHTML = html;
+    } catch (err) {
+        listaDiv.innerHTML = "Erro de conexão com o servidor.";
     }
-
-    if (!data || data.length === 0) {
-        if (listaDiv) listaDiv.innerHTML = "Nenhum vínculo salvo na nuvem ainda.";
-        return;
-    }
-
-    let html = "";
-    for (let i = 0; i < data.length; i++) {
-        let u = data[i];
-        html += "<div style='border: 1px solid #ccc; padding: 10px; margin-bottom: 8px; border-radius: 4px; background: #fff;'>";
-        html += "<strong>Nome:</strong> " + u.nome_completo + "<br>";
-        html += "<strong>Documento:</strong> " + u.documento + "<br>";
-        html += "<strong>Empresa:</strong> " + u.empresa + "<br>";
-        html += "<strong>Salário:</strong> R$ " + u.salario;
-        html += "</div>";
-    }
-    if (listaDiv) listaDiv.innerHTML = html;
 }
 
 async function salvarDados() {
+    if (!supabase) {
+        alert("Supabase não inicializado.");
+        return;
+    }
+
     const nome = document.getElementById("nome_completo").value;
     const documento = document.getElementById("documento").value;
     const empresa = document.getElementById("empresa").value;
