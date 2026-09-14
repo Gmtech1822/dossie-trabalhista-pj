@@ -3,6 +3,7 @@ const SUPABASE_ANON_KEY = 'sb_publishable_CITnEYD84t4G3B-4kusdBw_17ea18b9';
 
 let supabase = null;
 
+// Inicializa assim que a página carregar
 window.addEventListener("DOMContentLoaded", function() {
     if (window.supabase) {
         supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -10,14 +11,6 @@ window.addEventListener("DOMContentLoaded", function() {
     } else {
         const listaDiv = document.getElementById("listaUsuarios");
         if (listaDiv) listaDiv.innerHTML = "Erro: A biblioteca do Supabase não carregou.";
-    }
-
-    const form = document.querySelector("form");
-    if (form) {
-        form.addEventListener("submit", async function(e) {
-            e.preventDefault();
-            await salvarDados();
-        });
     }
 });
 
@@ -61,25 +54,22 @@ async function carregarDados() {
 
 async function salvarDados() {
     if (!supabase) {
-        alert("Erro crítico: Supabase não inicializado.");
+        alert("Erro: Supabase não inicializado.");
         return;
     }
 
-    const nomeInput = document.getElementById("nome_completo");
-    const documentoInput = document.getElementById("documento");
-    const empresaInput = document.getElementById("empresa");
-    const salarioInput = document.getElementById("salario");
+    const nome = document.getElementById("nome_completo").value;
+    const documento = document.getElementById("documento").value;
+    const empresa = document.getElementById("empresa").value;
+    const salario = parseFloat(document.getElementById("salario").value) || 0;
 
-    const nome = nomeInput ? nomeInput.value : "";
-    const documento = documentoInput ? documentoInput.value : "";
-    const empresa = empresaInput ? empresaInput.value : "";
-    const salario = salarioInput ? parseFloat(salarioInput.value) || 0 : 0;
-
-    // Alerta de teste para garantir que o botão foi clicado
-    console.log("Tentando salvar:", { nome, documento, empresa, salario });
+    if (!nome || !documento || !empresa) {
+        alert("Por favor, preencha todos os campos obrigatórios.");
+        return;
+    }
 
     try {
-        const { data, error } = await supabase
+        const { error } = await supabase
             .from('usuarios')
             .insert([{ 
                 nome_completo: nome, 
@@ -95,11 +85,15 @@ async function salvarDados() {
 
         alert("Vínculo salvo com sucesso na nuvem!");
         
-        const form = document.querySelector("form");
-        if (form) form.reset();
+        // Limpa os campos manualmente
+        document.getElementById("nome_completo").value = "";
+        document.getElementById("documento").value = "";
+        document.getElementById("empresa").value = "";
+        document.getElementById("salario").value = "";
         
+        // Atualiza a lista na tela
         carregarDados();
     } catch (err) {
-        alert("Erro inesperado na requisição: " + err.message);
+        alert("Erro inesperado: " + err.message);
     }
 }
