@@ -3,13 +3,13 @@ const SUPABASE_ANON_KEY = 'sb_publishable_CITnEYD84t4G3B-4kusdBw_17ea18b9';
 
 let supabase = null;
 
-// Garante que a biblioteca do Supabase carregou antes de usar
 window.addEventListener("DOMContentLoaded", function() {
     if (window.supabase) {
         supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         carregarDados();
     } else {
-        document.getElementById("listaUsuarios").innerHTML = "Erro: A biblioteca do Supabase não carregou.";
+        const listaDiv = document.getElementById("listaUsuarios");
+        if (listaDiv) listaDiv.innerHTML = "Erro: A biblioteca do Supabase não carregou.";
     }
 
     const form = document.querySelector("form");
@@ -39,7 +39,7 @@ async function carregarDados() {
         }
 
         if (!data || data.length === 0) {
-            listaDiv.innerHTML = "Nenhum vínculo salvo na nuvem ainda.";
+            listaDiv.innerHTML = "Nenhum vínculo salvo na nuvem ainda. Preencha o formulário acima e clique em salvar.";
             return;
         }
 
@@ -55,31 +55,51 @@ async function carregarDados() {
         }
         listaDiv.innerHTML = html;
     } catch (err) {
-        listaDiv.innerHTML = "Erro de conexão com o servidor.";
+        listaDiv.innerHTML = "Erro de conexão ao buscar dados.";
     }
 }
 
 async function salvarDados() {
     if (!supabase) {
-        alert("Supabase não inicializado.");
+        alert("Erro crítico: Supabase não inicializado.");
         return;
     }
 
-    const nome = document.getElementById("nome_completo").value;
-    const documento = document.getElementById("documento").value;
-    const empresa = document.getElementById("empresa").value;
-    const salario = parseFloat(document.getElementById("salario").value) || 0;
+    const nomeInput = document.getElementById("nome_completo");
+    const documentoInput = document.getElementById("documento");
+    const empresaInput = document.getElementById("empresa");
+    const salarioInput = document.getElementById("salario");
 
-    const { error } = await supabase
-        .from('usuarios')
-        .insert([{ nome_completo: nome, documento: documento, empresa: empresa, salario: salario }]);
+    const nome = nomeInput ? nomeInput.value : "";
+    const documento = documentoInput ? documentoInput.value : "";
+    const empresa = empresaInput ? empresaInput.value : "";
+    const salario = salarioInput ? parseFloat(salarioInput.value) || 0 : 0;
 
-    if (error) {
-        alert("Erro ao salvar: " + error.message);
-        return;
+    // Alerta de teste para garantir que o botão foi clicado
+    console.log("Tentando salvar:", { nome, documento, empresa, salario });
+
+    try {
+        const { data, error } = await supabase
+            .from('usuarios')
+            .insert([{ 
+                nome_completo: nome, 
+                documento: documento, 
+                empresa: empresa, 
+                salario: salario 
+            }]);
+
+        if (error) {
+            alert("Erro do Supabase ao salvar: " + error.message);
+            return;
+        }
+
+        alert("Vínculo salvo com sucesso na nuvem!");
+        
+        const form = document.querySelector("form");
+        if (form) form.reset();
+        
+        carregarDados();
+    } catch (err) {
+        alert("Erro inesperado na requisição: " + err.message);
     }
-
-    alert("Vínculo salvo com sucesso!");
-    document.querySelector("form").reset();
-    carregarDados();
 }
