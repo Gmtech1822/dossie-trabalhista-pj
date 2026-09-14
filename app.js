@@ -1,25 +1,24 @@
-// VERSAO DE TESTE 3.0 - FORCANDO EXIBICAO DE ERROS
 const SUPABASE_URL = 'https://uquccgrryamyiazggsqh.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_CITnEYD84t4G3B-4kusdBw_17ea18b9';
 
 let supabaseClient = null;
 
-// Executa imediatamente ao carregar o script
 window.addEventListener("DOMContentLoaded", async function() {
     const listaDiv = document.getElementById("listaUsuarios");
     
     try {
         if (!window.supabase) {
-            listaDiv.innerHTML = "ERRO: A biblioteca do Supabase não foi injetada no HTML.";
+            listaDiv.innerHTML = "ERRO: A biblioteca do Supabase não carregou.";
             return;
         }
 
+        // Inicializa o cliente padrão do Supabase
         supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        listaDiv.innerHTML = "Conectado! Buscando dados...";
+        listaDiv.innerHTML = "Conectado à nuvem. Carregando...";
 
         await carregarRegistros();
     } catch (e) {
-        listaDiv.innerHTML = "ERRO GLOBAL NO INIT: " + e.message;
+        listaDiv.innerHTML = "Erro ao iniciar: " + e.message;
     }
 });
 
@@ -27,28 +26,25 @@ async function carregarRegistros() {
     const listaDiv = document.getElementById("listaUsuarios");
     
     try {
-        const resposta = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=*`, {
-            headers: {
-                "apikey": SUPABASE_ANON_KEY,
-                "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
-            }
-        });
+        // Usando a API nativa do cliente Supabase em vez de fetch manual
+        const { data, error } = await supabaseClient
+            .from('usuarios')
+            .select('*')
+            .order('id', { ascending: false });
 
-        if (!resposta.ok) {
-            listaDiv.innerHTML = "Erro HTTP na API: " + resposta.status;
+        if (error) {
+            listaDiv.innerHTML = "Erro do banco: " + error.message;
             return;
         }
 
-        const registros = await resposta.json();
-
-        if (!registros || registros.length === 0) {
+        if (!data || data.length === 0) {
             listaDiv.innerHTML = "Nenhum vínculo salvo na nuvem ainda.";
             return;
         }
 
         let html = "";
-        for (let i = 0; i < registros.length; i++) {
-            let u = registros[i];
+        for (let i = 0; i < data.length; i++) {
+            let u = data[i];
             html += "<div style='border: 1px solid #cbd5e1; padding: 12px; margin-bottom: 10px; border-radius: 6px; background: #f8fafc;'>";
             html += "<strong>Nome:</strong> " + (u.nome_completo || 'N/A') + "<br>";
             html += "<strong>Documento:</strong> " + (u.documento || 'N/A') + "<br>";
@@ -59,7 +55,7 @@ async function carregarRegistros() {
         listaDiv.innerHTML = html;
 
     } catch (err) {
-        listaDiv.innerHTML = "Erro ao buscar registros: " + err.message;
+        listaDiv.innerHTML = "Erro de conexão: Verifique sua internet.";
     }
 }
 
@@ -90,7 +86,7 @@ async function salvarDados() {
             }]);
 
         if (error) {
-            alert("Erro ao inserir no Supabase: " + error.message);
+            alert("Erro ao salvar no Supabase: " + error.message);
             return;
         }
 
