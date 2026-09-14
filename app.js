@@ -7,23 +7,21 @@ window.addEventListener("DOMContentLoaded", function() {
 
 async function carregarRegistros() {
     const listaDiv = document.getElementById("listaUsuarios");
-    listaDiv.innerHTML = "Carregando via dados móveis...";
+    listaDiv.innerHTML = "Conectando ao banco de dados...";
 
     try {
-        // Usando URLSearchParams para forçar uma requisição limpa compatível com restrições de operadora
         const url = `${SUPABASE_URL}/rest/v1/usuarios?select=*&order=id.desc`;
         
         const resposta = await fetch(url, {
             method: 'GET',
             headers: {
                 "apikey": SUPABASE_ANON_KEY,
-                "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-                "Accept": "application/json"
+                "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
             }
         });
 
         if (!resposta.ok) {
-            listaDiv.innerHTML = "Erro HTTP: " + resposta.status;
+            listaDiv.innerHTML = "Banco online, mas a rede móvel barrou a resposta. Tente ativar o 'Para computador' no menu do Chrome.";
             return;
         }
 
@@ -47,8 +45,7 @@ async function carregarRegistros() {
         listaDiv.innerHTML = html;
 
     } catch (err) {
-        // Se a rede móvel bloquear o fetch, tentamos um fallback visual amigável
-        listaDiv.innerHTML = "Aviso da operadora: Conexão direta restrita no 4G. Tente usar o navegador em modo computador.";
+        listaDiv.innerHTML = "Para liberar o 4G, ative a opção 'Para computador' (versão para desktop) tocando nos 3 pontinhos do topo do Chrome.";
     }
 }
 
@@ -81,7 +78,7 @@ async function salvarDados() {
         });
 
         if (!resposta.ok) {
-            alert("Erro ao salvar dados.");
+            alert("Erro ao salvar os dados na nuvem.");
             return;
         }
 
@@ -94,6 +91,6 @@ async function salvarDados() {
         
         carregarRegistros();
     } catch (e) {
-        alert("Erro ao salvar na rede móvel.");
+        alert("Erro de conexão ao salvar.");
     }
 }
