@@ -1,41 +1,33 @@
 const SUPABASE_URL = 'https://uquccgrryamyiazggsqh.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_CITnEYD84t4G3B-4kusdBw_17ea18b9';
 
-let supabaseClient = null;
-
-window.addEventListener("DOMContentLoaded", async function() {
-    const listaDiv = document.getElementById("listaUsuarios");
-    
-    try {
-        if (!window.supabase) {
-            listaDiv.innerHTML = "ERRO: A biblioteca do Supabase não carregou.";
-            return;
-        }
-
-        // Inicializa o cliente padrão do Supabase
-        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        listaDiv.innerHTML = "Conectado à nuvem. Carregando...";
-
-        await carregarRegistros();
-    } catch (e) {
-        listaDiv.innerHTML = "Erro ao iniciar: " + e.message;
-    }
+window.addEventListener("DOMContentLoaded", function() {
+    carregarRegistrosSeguro();
 });
 
-async function carregarRegistros() {
+async function carregarRegistrosSeguro() {
     const listaDiv = document.getElementById("listaUsuarios");
-    
-    try {
-        // Usando a API nativa do cliente Supabase em vez de fetch manual
-        const { data, error } = await supabaseClient
-            .from('usuarios')
-            .select('*')
-            .order('id', { ascending: false });
+    listaDiv.innerHTML = "Conectando via API direta...";
 
-        if (error) {
-            listaDiv.innerHTML = "Erro do banco: " + error.message;
+    try {
+        const urlBusca = `${SUPABASE_URL.trim()}/rest/v1/usuarios?select=*`;
+        
+        const resposta = await fetch(urlBusca, {
+            method: 'GET',
+            headers: {
+                "apikey": SUPABASE_ANON_KEY.trim(),
+                "Authorization": `Bearer ${SUPABASE_ANON_KEY.trim()}`,
+                "Content-Type": "application/json"
+            },
+            mode: 'cors'
+        });
+
+        if (!resposta.ok) {
+            listaDiv.innerHTML = "Erro HTTP do servidor: " + resposta.status;
             return;
         }
+
+        const data = await resposta.json();
 
         if (!data || data.length === 0) {
             listaDiv.innerHTML = "Nenhum vínculo salvo na nuvem ainda.";
@@ -55,7 +47,7 @@ async function carregarRegistros() {
         listaDiv.innerHTML = html;
 
     } catch (err) {
-        listaDiv.innerHTML = "Erro de conexão: Verifique sua internet.";
+        listaDiv.innerHTML = "Erro de rede (Failed to fetch): Verifique se o projeto Supabase está ativo ou se há bloqueio de DNS/Rede.";
     }
 }
 
@@ -70,35 +62,39 @@ async function salvarDados() {
         return;
     }
 
-    if (!supabaseClient) {
-        alert("Supabase não inicializado.");
-        return;
-    }
-
     try {
-        const { error } = await supabaseClient
-            .from('usuarios')
-            .insert([{ 
-                nome_completo: nome, 
-                documento: documento, 
-                empresa: empresa, 
-                salario: salario 
-            }]);
+        const resposta = await fetch(`${SUPABASE_URL.trim()}/rest/v1/usuarios`, {
+            method: 'POST',
+            headers: {
+                "apikey": SUPABASE_ANON_KEY.trim(),
+                "Authorization": `Bearer ${SUPABASE_ANON_KEY.trim()}`,
+                "Content-Type": "application/json",
+                "Prefer": "return=representation"
+            },
+            body: JSON.stringify({
+                nome_completo: nome,
+                documento: documento,
+                empresa: empresa,
+                salario: salario
+            }),
+            mode: 'cors'
+        });
 
-        if (error) {
-            alert("Erro ao salvar no Supabase: " + error.message);
+        if (!resposta.ok) {
+            const erroJson = await resposta.json();
+            alert("Erro ao salvar: " + (erroJson.message || resposta.status));
             return;
         }
 
-        alert("Vínculo salvo com sucesso!");
+        alert("Vínculo salvo com sucesso na nuvem!");
         
         document.getElementById("nome_completo").value = "";
         document.getElementById("documento").value = "";
         document.getElementById("empresa").value = "";
         document.getElementById("salario").value = "";
         
-        carregarRegistros();
+        carregarRegistrosSeguro();
     } catch (e) {
-        alert("Erro ao salvar: " + e.message);
+        alert("Erro de conexão ao salvar: " + e.message);
     }
 }
