@@ -1,6 +1,5 @@
 const SUPABASE_URL = 'https://uquccgrryamyiazggsqh.supabase.co';
-// Chave nova do Supabase
-const SUPABASE_ANON_KEY = 'sb_publishable_CITnEYD84t4G3B-4kusdBw_17ea18b9';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVxdWNjZ3JyeWFteXRhemdnc3FrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkzOTI4MTIsImV4cCI6MjEwNDk2ODgxMn0.XbhN19ygrSRGuz7YvdjAeWJSYA5FRkqPIQH92w473ME';
 
 window.addEventListener("DOMContentLoaded", function() {
     carregarRegistros();
