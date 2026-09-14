@@ -1,52 +1,19 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dossiê Trabalhista PJ</title>
-</head>
-<body style="font-family: Arial, sans-serif; background-color: #f4f6f9; color: #333; padding: 20px; max-width: 600px; margin: auto;">
+<label>Seu Nome Completo:</label>
+<input type="text" id="nome_completo" />
 
-    <div style="background: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-        <h1 style="text-align: center; color: #1e293b; margin-bottom: 5px;">Dossiê Trabalhista PJ</h1>
-        <p style="text-align: center; color: #64748b; margin-top: 0;">Plataforma de Auditoria e Blindagem de Vínculos</p>
+<label>CPF ou CNPJ da Contratante:</label>
+<input type="text" id="documento" />
 
-        <!-- Formulário de Cadastro -->
-        <form style="display: flex; flex-direction: column; gap: 12px; margin-top: 20px;">
-            <div>
-                <label for="nome_completo" style="display: block; font-weight: bold; margin-bottom: 5px;">Seu Nome Completo:</label>
-                <input type="text" id="nome_completo" name="nome_completo" required style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
-            </div>
+<label>Empresa Tomadora:</label>
+<input type="text" id="empresa" />
 
-            <div>
-                <label for="documento" style="display: block; font-weight: bold; margin-bottom: 5px;">CPF ou CNPJ da Contratante:</label>
-                <input type="text" id="documento" name="documento" required style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
-            </div>
+<label>Salário Base Mensal (R$):</label>
+<input type="number" id="salario" />
 
-            <div>
-                <label for="empresa" style="display: block; font-weight: bold; margin-bottom: 5px;">Empresa Tomadora:</label>
-                <input type="text" id="empresa" name="empresa" required style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
-            </div>
+<label>Dinâmica de Pagamentos (Ex: Vales dia 15, Repasses CNPJ):</label>
+<input type="text" id="detalhes_pagamento" placeholder="Ex: Vales quinzenais e repasses PJ" />
 
-            <div>
-                <label for="salario" style="display: block; font-weight: bold; margin-bottom: 5px;">Salário Base Mensal (R$):</label>
-                <input type="number" id="salario" name="salario" step="0.01" required style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
-            </div>
+<label>Jornada e Condições (Ex: Horários, Cartão, Descontos):</label>
+<input type="text" id="condicoes_trabalho" placeholder="Ex: Obrigação de ponto, uso de cartão corporativo" />
 
-            <button type="button" onclick="salvarDados()" style="background-color: #0284c7; color: white; padding: 10px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 10px;">Salvar e Blindar Vínculo</button>
-            
-
-        <!-- Seção de Listagem -->
-        <div style="margin-top: 30px;">
-            <h2 style="border-bottom: 2px solid #e2e8f0; padding-bottom: 5px; color: #1e293b;">Vínculos Salvos na Nuvem</h2>
-            <div id="listaUsuarios" style="margin-top: 10px;">Carregando registros...</div>
-        </div>
-    </div>
-
-    <!-- Biblioteca oficial do Supabase -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
-    <!-- Seu arquivo de lógica -->
-    <script src="app.js"></script>
-</body>
-</html>
+<button onclick="salvarDados()">Salvar e Blindar Vínculo</button>
