@@ -1,45 +1,101 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dossiê Trabalhista PJ</title>
-    <!-- Estilos do projeto (se houver) -->
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <div class="container">
-        <h1>Dossiê Trabalhista PJ</h1>
-        <p>Plataforma de Auditoria e Blindagem de Vínculos</p>
+// Configuração do Supabase
+const SUPABASE_URL = 'https://uquccgrryamyiazggsqh.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_CITnEYD84t4G3B-4kusdBw_17ea18b9';
 
-        <!-- Formulário de Cadastro -->
-        <form>
-            <label for="nome_completo">Seu Nome Completo:</label>
-            <input type="text" id="nome_completo" name="nome_completo" required>
+// Inicializa o cliente do Supabase
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-            <label for="documento">CPF ou CNPJ da Contratante:</label>
-            <input type="text" id="documento" name="documento" required>
+document.addEventListener("DOMContentLoaded", () => {
+    buscarUsuarios();
 
-            <label for="empresa">Empresa Tomadora:</label>
-            <input type="text" id="empresa" name="empresa" required>
+    const formulario = document.querySelector("form");
+    if (formulario) {
+        formulario.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            await salvarUsuario();
+        });
+    }
+});
 
-            <label for="salario">Salário Base Mensal (R$):</label>
-            <input type="number" id="salario" name="salario" step="0.01" required>
+// Função para buscar e listar os registros salvos
+async function buscarUsuarios() {
+    const container = document.getElementById("listaUsuarios");
+    if (container) container.innerHTML = "Carregando registros...";
 
-            <button type="submit">Salvar e Blindar Vínculo</button>
-        </form>
+    try {
+        const { data, error } = await supabase
+            .from('usuarios')
+            .select('*')
+            .order('id', { ascending: false });
 
-        <!-- Seção de Listagem -->
-        <div class="secao-lista">
-            <h2>Vínculos Salvos na Nuvem</h2>
-            <div id="listaUsuarios">Carregando registros...</div>
+        if (error) {
+            console.error("Erro ao carregar dados:", error.message);
+            if (container) container.innerHTML = `<p style="color: red;">Erro ao carregar da nuvem: ${error.message}</p>`;
+            return;
+        }
+
+        renderizarLista(data);
+    } catch (err) {
+        console.error("Erro inesperado ao buscar:", err);
+        if (container) container.innerHTML = `<p style="color: red;">Erro inesperado ao conectar.</p>`;
+    }
+}
+
+// Função para salvar um novo registro
+async function salvarUsuario() {
+    const nomeInput = document.getElementById("nome_completo");
+    const documentoInput = document.getElementById("documento");
+    const empresaInput = document.getElementById("empresa");
+    const salarioInput = document.getElementById("salario");
+
+    const novoUsuario = {
+        nome_completo: nomeInput ? nomeInput.value : "",
+        documento: documentoInput ? documentoInput.value : "",
+        empresa: empresaInput ? empresaInput.value : "",
+        salario: salarioInput ? parseFloat(salarioInput.value) || 0 : 0
+    };
+
+    try {
+        const { data, error } = await supabase
+            .from('usuarios')
+            .insert([novoUsuario]);
+
+        if (error) {
+            console.error("Erro ao salvar:", error.message);
+            alert("Erro ao processar o salvamento: " + error.message);
+            return;
+        }
+
+        alert("Vínculo salvo com sucesso!");
+        
+        // Limpa o formulário após salvar com sucesso
+        const formulario = document.querySelector("form");
+        if (formulario) formulario.reset();
+
+        // Atualiza a lista na tela imediatamente
+        buscarUsuarios();
+    } catch (err) {
+        console.error("Erro inesperado ao salvar:", err);
+        alert("Erro ao processar o salvamento.");
+    }
+}
+
+// Função para exibir os dados na tela
+function renderizarLista(usuarios) {
+    const container = document.getElementById("listaUsuarios");
+    if (!container) return;
+
+    if (!usuarios || usuarios.length === 0) {
+        container.innerHTML = "<p>Nenhum vínculo salvo na nuvem ainda.</p>";
+        return;
+    }
+
+    container.innerHTML = usuarios.map(u => `
+        <div class="vinculo-card" style="background: #fff; border: 1px solid #ddd; padding: 12px; margin-bottom: 10px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <p style="margin: 4px 0;"><strong>Nome:</strong> ${u.nome_completo}</p>
+            <p style="margin: 4px 0;"><strong>Documento:</strong> ${u.documento}</p>
+            <p style="margin: 4px 0;"><strong>Empresa:</strong> ${u.empresa}</p>
+            <p style="margin: 4px 0;"><strong>Salário:</strong> R$ ${u.salario}</p>
         </div>
-    </div>
-
-    <!-- Biblioteca oficial do Supabase -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
-    <!-- Seu arquivo de lógica -->
-    <script src="app.js"></script>
-</body>
-</html>
+    `).join('');
+}
