@@ -7,22 +7,20 @@ window.addEventListener("DOMContentLoaded", function() {
 
 async function carregarRegistros() {
     const listaDiv = document.getElementById("listaUsuarios");
-    listaDiv.innerHTML = "Carregando registros da nuvem...";
+    listaDiv.innerHTML = "Carregando registros...";
 
     try {
-        // Usando fetch direto com cabeçalhos otimizados para contornar restrições de rede móvel
-        const resposta = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=*&order=id.desc`, {
+        const url = `${SUPABASE_URL}/rest/v1/usuarios?select=*&order=id.desc`;
+        const resposta = await window.fetch(url, {
             method: 'GET',
             headers: {
                 "apikey": SUPABASE_ANON_KEY,
-                "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-                "Content-Type": "application/json"
-            },
-            mode: 'cors'
+                "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+            }
         });
 
         if (!resposta.ok) {
-            listaDiv.innerHTML = "Erro ao carregar dados (Status: " + resposta.status + ")";
+            listaDiv.innerHTML = "Erro ao carregar dados do servidor.";
             return;
         }
 
@@ -46,7 +44,7 @@ async function carregarRegistros() {
         listaDiv.innerHTML = html;
 
     } catch (err) {
-        listaDiv.innerHTML = "Aviso: A rede móvel bloqueou a conexão direta. Tente via Wi-Fi ou recarregue a página.";
+        listaDiv.innerHTML = "Erro de rede ao conectar com o banco.";
     }
 }
 
@@ -62,7 +60,7 @@ async function salvarDados() {
     }
 
     try {
-        const resposta = await fetch(`${SUPABASE_URL}/rest/v1/usuarios`, {
+        const resposta = await window.fetch(`${SUPABASE_URL}/rest/v1/usuarios`, {
             method: 'POST',
             headers: {
                 "apikey": SUPABASE_ANON_KEY,
@@ -75,13 +73,11 @@ async function salvarDados() {
                 documento: documento,
                 empresa: empresa,
                 salario: salario
-            }),
-            mode: 'cors'
+            })
         });
 
         if (!resposta.ok) {
-            const erroJson = await resposta.json();
-            alert("Erro ao salvar: " + (erroJson.message || resposta.status));
+            alert("Erro ao salvar os dados.");
             return;
         }
 
@@ -94,6 +90,6 @@ async function salvarDados() {
         
         carregarRegistros();
     } catch (e) {
-        alert("Erro de conexão ao salvar. Verifique se a sua rede móvel permite requisições externas.");
+        alert("Erro de conexão ao salvar.");
     }
 }
