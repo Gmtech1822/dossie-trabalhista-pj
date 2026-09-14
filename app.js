@@ -2,29 +2,32 @@ const SUPABASE_URL = 'https://uquccgrryamyiazggsqh.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVxdWNjZ3JyeWFteXRhemdnc3FrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkzOTI4MTIsImV4cCI6MjEwNDk2ODgxMn0.XbhN19ygrSRGuz7YvdjAeWJSYA5FRkqPIQH92w473ME';
 
 window.addEventListener("DOMContentLoaded", function() {
-    carregarRegistros();
+    setTimeout(() => {
+        carregarRegistros();
+    }, 500);
 });
 
 async function carregarRegistros() {
     const listaDiv = document.getElementById("listaUsuarios");
     listaDiv.innerHTML = "Carregando registros da nuvem...";
 
-    try {
-        const resposta = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=*&order=id.desc`, {
-            method: 'GET',
-            headers: {
-                "apikey": SUPABASE_ANON_KEY,
-                "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-                "Content-Type": "application/json"
-            }
-        });
+    if (!window.supabase) {
+        listaDiv.innerHTML = "Erro: A biblioteca do Supabase não carregou. Verifique sua conexão.";
+        return;
+    }
 
-        if (!resposta.ok) {
-            listaDiv.innerHTML = "Erro HTTP: " + resposta.status;
+    try {
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        const { data, error } = await supabaseClient
+            .from('usuarios')
+            .select('*')
+            .order('id', { ascending: false });
+
+        if (error) {
+            listaDiv.innerHTML = "Erro ao carregar: " + error.message;
             return;
         }
-
-        const data = await resposta.json();
 
         if (!data || data.length === 0) {
             listaDiv.innerHTML = "Nenhum vínculo salvo na nuvem ainda.";
@@ -44,7 +47,7 @@ async function carregarRegistros() {
         listaDiv.innerHTML = html;
 
     } catch (err) {
-        listaDiv.innerHTML = "Erro de conexão ao buscar dados.";
+        listaDiv.innerHTML = "Erro de conexão ao buscar dados. Verifique o sinal ou bloqueio de rede.";
     }
 }
 
@@ -60,25 +63,19 @@ async function salvarDados() {
     }
 
     try {
-        const resposta = await fetch(`${SUPABASE_URL}/rest/v1/usuarios`, {
-            method: 'POST',
-            headers: {
-                "apikey": SUPABASE_ANON_KEY,
-                "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-                "Content-Type": "application/json",
-                "Prefer": "return=representation"
-            },
-            body: JSON.stringify({
-                nome_completo: nome,
-                documento: documento,
-                empresa: empresa,
-                salario: salario
-            })
-        });
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        if (!resposta.ok) {
-            const erroJson = await resposta.json();
-            alert("Erro ao salvar: " + (erroJson.message || resposta.status));
+        const { error } = await supabaseClient
+            .from('usuarios')
+            .insert([{ 
+                nome_completo: nome, 
+                documento: documento, 
+                empresa: empresa, 
+                salario: salario 
+            }]);
+
+        if (error) {
+            alert("Erro ao salvar: " + error.message);
             return;
         }
 
