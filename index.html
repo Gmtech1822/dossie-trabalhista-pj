@@ -1,101 +1,52 @@
-// Configuração do Supabase
-const SUPABASE_URL = 'https://uquccgrryamyiazggsqh.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_CITnEYD84t4G3B-4kusdBw_17ea18b9';
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dossiê Trabalhista PJ</title>
+</head>
+<body style="font-family: Arial, sans-serif; background-color: #f4f6f9; color: #333; padding: 20px; max-width: 600px; margin: auto;">
 
-// Inicializa o cliente do Supabase
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    <div style="background: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        <h1 style="text-align: center; color: #1e293b; margin-bottom: 5px;">Dossiê Trabalhista PJ</h1>
+        <p style="text-align: center; color: #64748b; margin-top: 0;">Plataforma de Auditoria e Blindagem de Vínculos</p>
 
-document.addEventListener("DOMContentLoaded", () => {
-    buscarUsuarios();
+        <!-- Formulário de Cadastro -->
+        <form style="display: flex; flex-direction: column; gap: 12px; margin-top: 20px;">
+            <div>
+                <label for="nome_completo" style="display: block; font-weight: bold; margin-bottom: 5px;">Seu Nome Completo:</label>
+                <input type="text" id="nome_completo" name="nome_completo" required style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
+            </div>
 
-    const formulario = document.querySelector("form");
-    if (formulario) {
-        formulario.addEventListener("submit", async (e) => {
-            e.preventDefault();
-            await salvarUsuario();
-        });
-    }
-});
+            <div>
+                <label for="documento" style="display: block; font-weight: bold; margin-bottom: 5px;">CPF ou CNPJ da Contratante:</label>
+                <input type="text" id="documento" name="documento" required style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
+            </div>
 
-// Função para buscar e listar os registros salvos
-async function buscarUsuarios() {
-    const container = document.getElementById("listaUsuarios");
-    if (container) container.innerHTML = "Carregando registros...";
+            <div>
+                <label for="empresa" style="display: block; font-weight: bold; margin-bottom: 5px;">Empresa Tomadora:</label>
+                <input type="text" id="empresa" name="empresa" required style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
+            </div>
 
-    try {
-        const { data, error } = await supabase
-            .from('usuarios')
-            .select('*')
-            .order('id', { ascending: false });
+            <div>
+                <label for="salario" style="display: block; font-weight: bold; margin-bottom: 5px;">Salário Base Mensal (R$):</label>
+                <input type="number" id="salario" name="salario" step="0.01" required style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
+            </div>
 
-        if (error) {
-            console.error("Erro ao carregar dados:", error.message);
-            if (container) container.innerHTML = `<p style="color: red;">Erro ao carregar da nuvem: ${error.message}</p>`;
-            return;
-        }
+            <button type="submit" style="background-color: #0284c7; color: white; padding: 10px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 10px;">Salvar e Blindar Vínculo</button>
+        </form>
 
-        renderizarLista(data);
-    } catch (err) {
-        console.error("Erro inesperado ao buscar:", err);
-        if (container) container.innerHTML = `<p style="color: red;">Erro inesperado ao conectar.</p>`;
-    }
-}
-
-// Função para salvar um novo registro
-async function salvarUsuario() {
-    const nomeInput = document.getElementById("nome_completo");
-    const documentoInput = document.getElementById("documento");
-    const empresaInput = document.getElementById("empresa");
-    const salarioInput = document.getElementById("salario");
-
-    const novoUsuario = {
-        nome_completo: nomeInput ? nomeInput.value : "",
-        documento: documentoInput ? documentoInput.value : "",
-        empresa: empresaInput ? empresaInput.value : "",
-        salario: salarioInput ? parseFloat(salarioInput.value) || 0 : 0
-    };
-
-    try {
-        const { data, error } = await supabase
-            .from('usuarios')
-            .insert([novoUsuario]);
-
-        if (error) {
-            console.error("Erro ao salvar:", error.message);
-            alert("Erro ao processar o salvamento: " + error.message);
-            return;
-        }
-
-        alert("Vínculo salvo com sucesso!");
-        
-        // Limpa o formulário após salvar com sucesso
-        const formulario = document.querySelector("form");
-        if (formulario) formulario.reset();
-
-        // Atualiza a lista na tela imediatamente
-        buscarUsuarios();
-    } catch (err) {
-        console.error("Erro inesperado ao salvar:", err);
-        alert("Erro ao processar o salvamento.");
-    }
-}
-
-// Função para exibir os dados na tela
-function renderizarLista(usuarios) {
-    const container = document.getElementById("listaUsuarios");
-    if (!container) return;
-
-    if (!usuarios || usuarios.length === 0) {
-        container.innerHTML = "<p>Nenhum vínculo salvo na nuvem ainda.</p>";
-        return;
-    }
-
-    container.innerHTML = usuarios.map(u => `
-        <div class="vinculo-card" style="background: #fff; border: 1px solid #ddd; padding: 12px; margin-bottom: 10px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-            <p style="margin: 4px 0;"><strong>Nome:</strong> ${u.nome_completo}</p>
-            <p style="margin: 4px 0;"><strong>Documento:</strong> ${u.documento}</p>
-            <p style="margin: 4px 0;"><strong>Empresa:</strong> ${u.empresa}</p>
-            <p style="margin: 4px 0;"><strong>Salário:</strong> R$ ${u.salario}</p>
+        <!-- Seção de Listagem -->
+        <div style="margin-top: 30px;">
+            <h2 style="border-bottom: 2px solid #e2e8f0; padding-bottom: 5px; color: #1e293b;">Vínculos Salvos na Nuvem</h2>
+            <div id="listaUsuarios" style="margin-top: 10px;">Carregando registros...</div>
         </div>
-    `).join('');
-}
+    </div>
+
+    <!-- Biblioteca oficial do Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Seu arquivo de lógica -->
+    <script src="app.js"></script>
+</body>
+</html>
