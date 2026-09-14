@@ -1,34 +1,23 @@
-const SUPABASE_URL = 'https://uquccgrryamyiazggsqh.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVxdWNjZ3JyeWFteXRhemdnc3FrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkzOTI4MTIsImV4cCI6MjEwNDk2ODgxMn0.XbhN19ygrSRGuz7YvdjAeWJSYA5FRkqPIQH92w473ME';
-
 window.addEventListener("DOMContentLoaded", function() {
     carregarRegistros();
 });
 
-async function carregarRegistros() {
+function carregarRegistros() {
     const listaDiv = document.getElementById("listaUsuarios");
-    listaDiv.innerHTML = "Conectando ao banco de dados...";
+    
+    // Recupera os dados salvos localmente no celular
+    const dadosSalvos = localStorage.getItem("dossie_trabalhista_usuarios");
+    
+    if (!dadosSalvos) {
+        listaDiv.innerHTML = "Nenhum vínculo salvo ainda. Cadastre o primeiro acima!";
+        return;
+    }
 
     try {
-        const url = `${SUPABASE_URL}/rest/v1/usuarios?select=*&order=id.desc`;
-        
-        const resposta = await fetch(url, {
-            method: 'GET',
-            headers: {
-                "apikey": SUPABASE_ANON_KEY,
-                "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
-            }
-        });
-
-        if (!resposta.ok) {
-            listaDiv.innerHTML = "Banco online, mas a rede móvel barrou a resposta. Tente ativar o 'Para computador' no menu do Chrome.";
-            return;
-        }
-
-        const data = await resposta.json();
+        const data = JSON.parse(dadosSalvos);
 
         if (!data || data.length === 0) {
-            listaDiv.innerHTML = "Nenhum vínculo salvo na nuvem ainda.";
+            listaDiv.innerHTML = "Nenhum vínculo salvo ainda.";
             return;
         }
 
@@ -43,13 +32,12 @@ async function carregarRegistros() {
             html += "</div>";
         }
         listaDiv.innerHTML = html;
-
-    } catch (err) {
-        listaDiv.innerHTML = "Para liberar o 4G, ative a opção 'Para computador' (versão para desktop) tocando nos 3 pontinhos do topo do Chrome.";
+    } catch (e) {
+        listaDiv.innerHTML = "Erro ao carregar os registros locais.";
     }
 }
 
-async function salvarDados() {
+function salvarDados() {
     const nome = document.getElementById("nome_completo").value;
     const documento = document.getElementById("documento").value;
     const empresa = document.getElementById("empresa").value;
@@ -60,37 +48,39 @@ async function salvarDados() {
         return;
     }
 
-    try {
-        const resposta = await fetch(`${SUPABASE_URL}/rest/v1/usuarios`, {
-            method: 'POST',
-            headers: {
-                "apikey": SUPABASE_ANON_KEY,
-                "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-                "Content-Type": "application/json",
-                "Prefer": "return=representation"
-            },
-            body: JSON.stringify({
-                nome_completo: nome,
-                documento: documento,
-                empresa: empresa,
-                salario: salario
-            })
-        });
+    // Cria o novo objeto de registro
+    const novoRegistro = {
+        id: Date.now(),
+        nome_completo: nome,
+        documento: documento,
+        empresa: empresa,
+        salario: salario
+    };
 
-        if (!resposta.ok) {
-            alert("Erro ao salvar os dados na nuvem.");
-            return;
+    // Puxa o que já tem salvo ou cria uma lista nova
+    let dadosExistentes = [];
+    const salvo = localStorage.getItem("dossie_trabalhista_usuarios");
+    if (salvo) {
+        try {
+            dadosExistentes = JSON.parse(salvo);
+        } catch (err) {
+            dadosExistentes = [];
         }
-
-        alert("Vínculo salvo com sucesso na nuvem!");
-        
-        document.getElementById("nome_completo").value = "";
-        document.getElementById("documento").value = "";
-        document.getElementById("empresa").value = "";
-        document.getElementById("salario").value = "";
-        
-        carregarRegistros();
-    } catch (e) {
-        alert("Erro de conexão ao salvar.");
     }
+
+    // Adiciona o novo no início da lista
+    dadosExistentes.unshift(novoRegistro);
+
+    // Salva de volta no navegador do celular
+    localStorage.setItem("dossie_trabalhista_usuarios", JSON.stringify(dadosExistentes));
+
+    alert("Vínculo salvo com sucesso no dispositivo!");
+
+    // Limpa os campos
+    document.getElementById("nome_completo").value = "";
+    document.getElementById("documento").value = "";
+    document.getElementById("empresa").value = "";
+    document.getElementById("salario").value = "";
+
+    carregarRegistros();
 }
