@@ -28,7 +28,10 @@ function carregarRegistros() {
             html += "<h3 style='margin-top: 0; color: #1e293b;'>🏢 " + (u.empresa || 'Empresa N/A') + "</h3>";
             html += "<strong>Profissional:</strong> " + (u.nome_completo || 'N/A') + "<br>";
             html += "<strong>Documento/CNPJ:</strong> " + (u.documento || 'N/A') + "<br>";
-            html += "<strong>Salário Base:</strong> R$ " + (u.salario || 0) + "<br><hr style='border:0; border-top:1px solid #e2e8f0; margin: 10px 0;'>";
+            html += "<strong>Salário Base / Acordado:</strong> R$ " + (u.salario || 0) + "<br>";
+            html += "<strong>Detalhes de Pagamento:</strong> " + (u.detalhes_pagamento || 'Não informado') + "<br>";
+            html += "<strong>Condições de Trabalho:</strong> " + (u.condicoes_trabalho || 'Não informado') + "<br>";
+            html += "<hr style='border:0; border-top:1px solid #e2e8f0; margin: 10px 0;'>";
             
             // Seção de Provas
             html += "<h4 style='margin: 5px 0; color: #0284c7;'>📁 Provas e Evidências Documentadas:</h4>";
@@ -45,7 +48,7 @@ function carregarRegistros() {
 
             // Formulário rápido para adicionar prova neste registro específico
             html += "<div style='display: flex; gap: 5px; margin-top: 10px;'>";
-            html += "<input type='text' id='nova_prova_" + u.id + "' placeholder='Ex: Print de chat exigindo horário fixo...' style='flex: 1; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px;'>";
+            html += "<input type='text' id='nova_prova_" + u.id + "' placeholder='Ex: Repasse incorreto em 15/09, uso de cartão corporativo...' style='flex: 1; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px;'>";
             html += "<button onclick='adicionarProva(" + u.id + ")' style='background: #0284c7; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 13px;'>Adicionar Prova</button>";
             html += "</div>";
 
@@ -62,9 +65,11 @@ function salvarDados() {
     const documento = document.getElementById("documento").value;
     const empresa = document.getElementById("empresa").value;
     const salario = parseFloat(document.getElementById("salario").value) || 0;
+    const detalhesPagamento = document.getElementById("detalhes_pagamento").value;
+    const condicoesTrabalho = document.getElementById("condicoes_trabalho").value;
 
     if (!nome || !documento || !empresa) {
-        alert("Preencha todos os campos obrigatórios.");
+        alert("Preencha os campos obrigatórios (Nome, CNPJ e Empresa).");
         return;
     }
 
@@ -74,7 +79,9 @@ function salvarDados() {
         documento: documento,
         empresa: empresa,
         salario: salario,
-        provas: [] // Inicializa a lista de provas vazia
+        detalhes_pagamento: detalhesPagamento || "Vales no dia 15 e repasses via PJ",
+        condicoes_trabalho: condicoesTrabalho || "Jornada controlada e subordinação",
+        provas: []
     };
 
     let dadosExistentes = [];
@@ -90,12 +97,14 @@ function salvarDados() {
     dadosExistentes.unshift(novoRegistro);
     localStorage.setItem("dossie_trabalhista_usuarios", JSON.stringify(dadosExistentes));
 
-    alert("Vínculo salvo com sucesso no dispositivo!");
+    alert("Vínculo e estrutura financeira salvos com sucesso no dispositivo!");
 
     document.getElementById("nome_completo").value = "";
     document.getElementById("documento").value = "";
     document.getElementById("empresa").value = "";
     document.getElementById("salario").value = "";
+    document.getElementById("detalhes_pagamento").value = "";
+    document.getElementById("condicoes_trabalho").value = "";
     
     carregarRegistros();
 }
@@ -105,7 +114,7 @@ function adicionarProva(idRegistro) {
     const textoProva = inputProva.value.trim();
 
     if (!textoProva) {
-        alert("Digite a descrição da prova antes de adicionar.");
+        alert("Digite a descrição da prova ou fato.");
         return;
     }
 
@@ -115,7 +124,6 @@ function adicionarProva(idRegistro) {
     try {
         let dadosExistentes = JSON.parse(salvo);
         
-        // Encontra o registro correspondente e adiciona a prova
         for (let i = 0; i < dadosExistentes.length; i++) {
             if (dadosExistentes[i].id === idRegistro) {
                 if (!dadosExistentes[i].provas) {
