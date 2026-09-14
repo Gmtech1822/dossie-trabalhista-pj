@@ -1,120 +1,100 @@
+// Configuração do Supabase
 const SUPABASE_URL = 'https://uquccgrryamyiazggsqh.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_CITnEYD84t4G3B-4kusdBw_17ea18b9';
 
+// Inicializa o cliente do Supabase
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 document.addEventListener("DOMContentLoaded", () => {
     buscarUsuarios();
+
+    const formulario = document.querySelector("form");
+    if (formulario) {
+        formulario.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            await salvarUsuario();
+        });
+    }
 });
 
+// Função para buscar e listar os registros salvos
 async function buscarUsuarios() {
-    const containerLista = document.getElementById("listaUsuarios");
-    
     try {
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=*`, {
-            method: 'GET',
-            headers: {
-                'apikey': SUPABASE_ANON_KEY,
-                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-            }
-        });
+        const { data, error } = await supabase
+            .from('usuarios')
+            .select('*')
+            .order('id', { ascending: false });
 
-        const data = await response.json();
-        
-        if (response.ok) {
-            if (data.length === 0) {
-                containerLista.innerHTML = '<p style="color: #718093; font-style: italic;">Nenhum vínculo cadastrado ainda.</p>';
-                return;
-            }
-
-            containerLista.innerHTML = '';
-            data.forEach(item => {
-                const card = document.createElement('div');
-                card.className = 'card';
-                card.innerHTML = `
-                    <div class="card-nome">${item.nome_completo}</div>
-                    <div class="card-detalhe">Tomadora: <strong>${item.empresa_tomadora_nome}</strong></div>
-                    <div class="card-detalhe">CPF/CNPJ: ${item.documento_cpf_cnpj}</div>
-                    <div class="card-salario">R$ ${Number(item.salario_base_mensal).toFixed(2)}</div>
-                    <button class="btn-dossie" onclick='gerarDossie(${JSON.stringify(item)})'>Gerar Dossiê Formal</button>
-                `;
-                containerLista.appendChild(card);
-            });
-        } else {
-            throw new Error('Erro ao carregar registros.');
+        if (error) {
+            console.error("Erro ao carregar dados:", error.message);
+            mostrarMensagem("Não foi possível carregar os dados da nuvem.", "erro");
+            return;
         }
-    } catch (error) {
-        containerLista.innerHTML = '<p style="color: #ff4757;">Não foi possível carregar os dados da nuvem.</p>';
+
+        renderizarLista(data);
+    } catch (err) {
+        console.error("Erro inesperado ao buscar:", err);
     }
 }
 
-async function salvarPerfil() {
-    const nome = document.getElementById("nome").value;
-    const cpfCnpj = document.getElementById("cpfCnpj").value;
-    const empresa = document.getElementById("empresa").value;
-    const salarioBase = document.getElementById("salarioBase").value;
+// Função para salvar um novo registro
+async function salvarUsuario() {
+    // Ajuste os IDs dos inputs conforme o seu HTML atual se necessário
+    const nomeInput = document.getElementById("nome_completo") || document.querySelector("input[name='nome_completo']") || document.querySelector("input");
+    const documentoInput = document.getElementById("documento") || document.querySelector("input[name='documento']");
+    const empresaInput = document.getElementById("empresa") || document.querySelector("input[name='empresa']");
+    const salarioInput = document.getElementById("salario") || document.querySelector("input[name='salario']");
 
-    if (!nome || !cpfCnpj || !empresa || !salarioBase) {
-        alert('Por favor, preencha todos os campos.');
+    const novoUsuario = {
+        nome_completo: nomeInput ? nomeInput.value : "",
+        documento: documentoInput ? documentoInput.value : "",
+        empresa: empresaInput ? empresaInput.value : "",
+        salario: salarioInput ? parseFloat(salarioInput.value) || 0 : 0
+    };
+
+    try {
+        const { data, error } = await supabase
+            .from('usuarios')
+            .insert([novoUsuario]);
+
+        if (error) {
+            console.error("Erro ao salvar:", error.message);
+            alert("Erro ao processar o salvamento: " + error.message);
+            return;
+        }
+
+        alert("Vínculo salvo com sucesso!");
+        formulario.reset();
+        buscarUsuarios();
+    } catch (err) {
+        console.error("Erro inesperado ao salvar:", err);
+        alert("Erro ao processar o salvamento.");
+    }
+}
+
+// Função para exibir os dados na tela (caso exista um container para isso)
+function renderizarLista(usuarios) {
+    const container = document.getElementById("vinculos-salvos") || document.querySelector(".vinculos-lista");
+    if (!container) return;
+
+    if (!usuarios || usuarios.length === 0) {
+        container.innerHTML = "<p>Nenhum vínculo salvo na nuvem ainda.</p>";
         return;
     }
 
-    try {
-        const salarioConvertido = parseFloat(salarioBase.replace(',', '.'));
-
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/usuarios`, {
-            method: 'POST',
-            headers: {
-                'apikey': SUPABASE_ANON_KEY,
-                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-                'Content-Type': 'application/json',
-                'Prefer': 'return=representation'
-            },
-            body: JSON.stringify({
-                nome_completo: nome,
-                documento_cpf_cnpj: cpfCnpj,
-                empresa_tomadora_nome: empresa,
-                salario_base_mensal: salarioConvertido
-            })
-        });
-
-        if (!response.ok) {
-            throw new Error('Erro ao salvar no servidor.');
-        }
-
-        alert('Vínculo salvo com segurança!');
-        
-        document.getElementById("nome").value = '';
-        document.getElementById("cpfCnpj").value = '';
-        document.getElementById("empresa").value = '';
-        document.getElementById("salarioBase").value = '';
-
-        buscarUsuarios();
-
-    } catch (error) {
-        alert('Erro ao processar o salvamento.');
-    }
+    container.innerHTML = usuarios.map(u => `
+        <div class="vinculo-card" style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; border-radius: 5px;">
+            <p><strong>Nome:</strong> ${u.nome_completo}</p>
+            <p><strong>Documento:</strong> ${u.documento}</p>
+            <p><strong>Empresa:</strong> ${u.empresa}</p>
+            <p><strong>Salário:</strong> R$ ${u.salario}</p>
+        </div>
+    `).join('');
 }
 
-async function gerarDossie(item) {
-    const textoDossie = 
-        `📋 DOSSIÊ TRABALHISTA PJ - REGISTRO DE VÍNCULO\n\n` +
-        `• Profissional: ${item.nome_completo}\n` +
-        `• Empresa Tomadora: ${item.empresa_tomadora_nome}\n` +
-        `• CPF/CNPJ Contratante: ${item.documento_cpf_cnpj}\n` +
-        `• Salário Base Mensal: R$ ${Number(item.salario_base_mensal).toFixed(2)}\n\n` +
-        `Documento gerado digitalmente para fins de comprovação e blindagem de vínculo trabalhista.`;
-
-    if (navigator.share) {
-        try {
-            await navigator.share({
-                title: 'Dossiê Trabalhista PJ',
-                text: textoDossie,
-            });
-        } catch (err) {
-            console.log('Compartilhamento cancelado.');
-        }
-    } else {
-        navigator.clipboard.writeText(textoDossie);
-        alert('Dossiê copiado para a área de transferência!');
+function mostrarMensagem(mensagem, tipo) {
+    const container = document.getElementById("vinculos-salvos") || document.querySelector(".vinculos-lista");
+    if (container && tipo === "erro") {
+        container.innerHTML = `<p style="color: red;">${mensagem}</p>`;
     }
-    }
-      
+}
