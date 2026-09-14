@@ -1,29 +1,27 @@
-// Removendo qualquer risco de caracteres invisíveis
 const SUPABASE_URL = 'https://uquccgrryamyiazggsqh.supabase.co';
+// Chave nova do Supabase
 const SUPABASE_ANON_KEY = 'sb_publishable_CITnEYD84t4G3B-4kusdBw_17ea18b9';
 
 window.addEventListener("DOMContentLoaded", function() {
-    carregarRegistrosSeguro();
+    carregarRegistros();
 });
 
-async function carregarRegistrosSeguro() {
+async function carregarRegistros() {
     const listaDiv = document.getElementById("listaUsuarios");
-    listaDiv.innerHTML = "Tentando conectar ao banco...";
+    listaDiv.innerHTML = "Carregando registros da nuvem...";
 
     try {
-        const urlBusca = SUPABASE_URL + "/rest/v1/usuarios?select=*";
-        
-        const resposta = await fetch(urlBusca, {
+        const resposta = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?select=*&order=id.desc`, {
             method: 'GET',
             headers: {
                 "apikey": SUPABASE_ANON_KEY,
-                "Authorization": "Bearer " + SUPABASE_ANON_KEY,
+                "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
                 "Content-Type": "application/json"
             }
         });
 
         if (!resposta.ok) {
-            listaDiv.innerHTML = "Erro HTTP do servidor: " + resposta.status;
+            listaDiv.innerHTML = "Erro HTTP: " + resposta.status;
             return;
         }
 
@@ -47,7 +45,7 @@ async function carregarRegistrosSeguro() {
         listaDiv.innerHTML = html;
 
     } catch (err) {
-        listaDiv.innerHTML = "Falha de rede ao acessar o Supabase. Verifique se o projeto está ativo no painel oficial.";
+        listaDiv.innerHTML = "Erro de conexão ao buscar dados.";
     }
 }
 
@@ -63,11 +61,11 @@ async function salvarDados() {
     }
 
     try {
-        const resposta = await fetch(SUPABASE_URL + "/rest/v1/usuarios", {
+        const resposta = await fetch(`${SUPABASE_URL}/rest/v1/usuarios`, {
             method: 'POST',
             headers: {
                 "apikey": SUPABASE_ANON_KEY,
-                "Authorization": "Bearer " + SUPABASE_ANON_KEY,
+                "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
                 "Content-Type": "application/json",
                 "Prefer": "return=representation"
             },
@@ -80,7 +78,8 @@ async function salvarDados() {
         });
 
         if (!resposta.ok) {
-            alert("Erro ao salvar no banco.");
+            const erroJson = await resposta.json();
+            alert("Erro ao salvar: " + (erroJson.message || resposta.status));
             return;
         }
 
@@ -91,7 +90,7 @@ async function salvarDados() {
         document.getElementById("empresa").value = "";
         document.getElementById("salario").value = "";
         
-        carregarRegistrosSeguro();
+        carregarRegistros();
     } catch (e) {
         alert("Erro de conexão ao salvar.");
     }
