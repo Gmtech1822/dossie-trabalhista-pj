@@ -1,3 +1,4 @@
+// Removendo qualquer risco de caracteres invisíveis
 const SUPABASE_URL = 'https://uquccgrryamyiazggsqh.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_CITnEYD84t4G3B-4kusdBw_17ea18b9';
 
@@ -7,19 +8,18 @@ window.addEventListener("DOMContentLoaded", function() {
 
 async function carregarRegistrosSeguro() {
     const listaDiv = document.getElementById("listaUsuarios");
-    listaDiv.innerHTML = "Conectando via API direta...";
+    listaDiv.innerHTML = "Tentando conectar ao banco...";
 
     try {
-        const urlBusca = `${SUPABASE_URL.trim()}/rest/v1/usuarios?select=*`;
+        const urlBusca = SUPABASE_URL + "/rest/v1/usuarios?select=*";
         
         const resposta = await fetch(urlBusca, {
             method: 'GET',
             headers: {
-                "apikey": SUPABASE_ANON_KEY.trim(),
-                "Authorization": `Bearer ${SUPABASE_ANON_KEY.trim()}`,
+                "apikey": SUPABASE_ANON_KEY,
+                "Authorization": "Bearer " + SUPABASE_ANON_KEY,
                 "Content-Type": "application/json"
-            },
-            mode: 'cors'
+            }
         });
 
         if (!resposta.ok) {
@@ -47,7 +47,7 @@ async function carregarRegistrosSeguro() {
         listaDiv.innerHTML = html;
 
     } catch (err) {
-        listaDiv.innerHTML = "Erro de rede (Failed to fetch): Verifique se o projeto Supabase está ativo ou se há bloqueio de DNS/Rede.";
+        listaDiv.innerHTML = "Falha de rede ao acessar o Supabase. Verifique se o projeto está ativo no painel oficial.";
     }
 }
 
@@ -63,11 +63,11 @@ async function salvarDados() {
     }
 
     try {
-        const resposta = await fetch(`${SUPABASE_URL.trim()}/rest/v1/usuarios`, {
+        const resposta = await fetch(SUPABASE_URL + "/rest/v1/usuarios", {
             method: 'POST',
             headers: {
-                "apikey": SUPABASE_ANON_KEY.trim(),
-                "Authorization": `Bearer ${SUPABASE_ANON_KEY.trim()}`,
+                "apikey": SUPABASE_ANON_KEY,
+                "Authorization": "Bearer " + SUPABASE_ANON_KEY,
                 "Content-Type": "application/json",
                 "Prefer": "return=representation"
             },
@@ -76,13 +76,11 @@ async function salvarDados() {
                 documento: documento,
                 empresa: empresa,
                 salario: salario
-            }),
-            mode: 'cors'
+            })
         });
 
         if (!resposta.ok) {
-            const erroJson = await resposta.json();
-            alert("Erro ao salvar: " + (erroJson.message || resposta.status));
+            alert("Erro ao salvar no banco.");
             return;
         }
 
@@ -95,6 +93,6 @@ async function salvarDados() {
         
         carregarRegistrosSeguro();
     } catch (e) {
-        alert("Erro de conexão ao salvar: " + e.message);
+        alert("Erro de conexão ao salvar.");
     }
 }
